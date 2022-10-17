@@ -201,6 +201,17 @@ public class RestService implements Serializable {
         return nodes.get(0).trim();
     }
 
+    public static String randomBeNode(String beNodes, Logger logger) throws IllegalArgumentException {
+        logger.trace("Parse nodes '{}'.", beNodes);
+        if (StringUtils.isEmpty(beNodes)) {
+            logger.error(ILLEGAL_ARGUMENT_MESSAGE, "benodes", beNodes);
+            throw new IllegalArgumentException("benodes", beNodes);
+        }
+        List<String> nodes = Arrays.asList(beNodes.split(","));
+        Collections.shuffle(nodes);
+        return nodes.get(0).trim();
+    }
+
     /**
      * get a valid URI to connect StarRocks FE.
      *
@@ -214,6 +225,7 @@ public class RestService implements Serializable {
         String[] identifier = parseIdentifier(cfg.getProperty(STARROCKS_TABLE_IDENTIFIER), logger);
         return "http://" +
                 randomEndpoint(cfg.getProperty(STARROCKS_FENODES), logger) + API_PREFIX +
+                //randomBeNode(cfg.getProperty(STARROCKS_BENODES), logger) + API_PREFIX +
                 "/" + identifier[0] +
                 "/" + identifier[1] +
                 "/";
@@ -478,7 +490,7 @@ public class RestService implements Serializable {
 
     public static String randomBackendV3(SparkSettings sparkSettings, Logger logger) throws StarrocksException {
         String beNodes = sparkSettings.getProperty(STARROCKS_BENODES);
-        String beNode = randomEndpoint(beNodes, logger);
+        String beNode = randomBeNode(beNodes, logger);
         return beNode;
     }
 
