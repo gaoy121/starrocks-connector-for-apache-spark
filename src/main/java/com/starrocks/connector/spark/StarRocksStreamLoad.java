@@ -18,6 +18,7 @@ package com.starrocks.connector.spark;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.*;
 import com.starrocks.connector.spark.cfg.ConfigurationOptions;
 import com.starrocks.connector.spark.cfg.SparkSettings;
 import com.starrocks.connector.spark.exception.StarrocksException;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +47,7 @@ public class StarRocksStreamLoad implements Serializable{
     private static final Logger LOG = LoggerFactory.getLogger(StarRocksStreamLoad.class);
 
     private final static List<String> STARROCKS_SUCCESS_STATUS = new ArrayList<>(Arrays.asList("Success", "Publish Timeout"));
+    private final static Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
     private static String loadUrlPattern = "http://%s/api/%s/%s/_stream_load?";
     private String user;
     private String passwd;
@@ -193,7 +196,9 @@ public class StarRocksStreamLoad implements Serializable{
         } catch (Exception e) {
             throw new StreamLoadException("The number of configured columns does not match the number of data columns.");
         }
-        load((new ObjectMapper()).writeValueAsString(dataList));
+        LOG.debug("load data is {}", dataList);
+        //load((new ObjectMapper()).writeValueAsString(dataList));
+        load(gson.toJson(dataList));
     }
 
     public void load(String value) throws StreamLoadException {
