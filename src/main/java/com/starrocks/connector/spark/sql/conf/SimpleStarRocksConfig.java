@@ -1,3 +1,5 @@
+// Copyright 2021-present StarRocks, Inc. All rights reserved.
+//
 // Licensed to the Apache Software Foundation (ASF) under one
 // or more contributor license agreements.  See the NOTICE file
 // distributed with this work for additional information
@@ -15,24 +17,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.starrocks.connector.spark.exception;
+package com.starrocks.connector.spark.sql.conf;
 
-public class StreamLoadException extends Exception {
-    public StreamLoadException() {
-        super();
-    }
-    public StreamLoadException(String message) {
-        super(message);
-    }
-    public StreamLoadException(String message, Throwable cause) {
-        super(message, cause);
-    }
-    public StreamLoadException(Throwable cause) {
-        super(cause);
-    }
-    protected StreamLoadException(String message, Throwable cause,
-                                  boolean enableSuppression,
-                                  boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+import java.util.Map;
+
+public class SimpleStarRocksConfig extends StarRocksConfigBase {
+
+    private static final long serialVersionUID = 1L;
+
+    public SimpleStarRocksConfig(Map<String, String> options) {
+        super(options);
     }
 }

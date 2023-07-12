@@ -25,7 +25,7 @@ import com.starrocks.connector.spark.cfg.Settings
 import com.starrocks.connector.spark.exception.StarrocksException
 import com.starrocks.connector.spark.rest.RestService
 import com.starrocks.connector.spark.rest.models.{Field, Schema}
-import com.starrocks.connector.thrift.TScanColumnDesc
+import com.starrocks.thrift.TScanColumnDesc
 
 import org.apache.spark.sql.types._
 
@@ -94,6 +94,7 @@ private[spark] object SchemaUtils {
       case "DECIMAL64"       => DecimalType(precision, scale)
       case "DECIMAL128"      => DecimalType(precision, scale)
       case "TIME"            => DataTypes.DoubleType
+      case "JSON"            => DataTypes.StringType
       // ARRAY HLL BITMAP
       case _                 =>
         throw new StarrocksException("Unsupported type " + starrocksType)

@@ -1,4 +1,4 @@
-// Modifications Copyright 2021 StarRocks Limited.
+// Copyright 2021-present StarRocks, Inc. All rights reserved.
 //
 // Licensed to the Apache Software Foundation (ASF) under one
 // or more contributor license agreements.  See the NOTICE file
@@ -17,16 +17,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.starrocks.connector.spark.exception;
+package com.starrocks.connector.spark.sql.schema;
 
-import com.starrocks.thrift.TStatusCode;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.InternalRow;
 
-import java.util.List;
-
-public class StarrocksInternalException extends StarrocksException {
-    public StarrocksInternalException(String server, TStatusCode statusCode, List<String> errorMsgs) {
-        super("StarRocks server " + server + " internal failed, status code [" + statusCode + "] error message is " +
-                errorMsgs);
-    }
-
+public interface RowStringConverter {
+    String fromRow(InternalRow row);
+    String fromRow(Row row);
 }

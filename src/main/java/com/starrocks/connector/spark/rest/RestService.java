@@ -19,38 +19,23 @@
 
 package com.starrocks.connector.spark.rest;
 
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_FENODES;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_BENODES;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_FILTER_QUERY;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_READ_FIELD;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_REQUEST_AUTH_PASSWORD;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_REQUEST_AUTH_USER;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_TABLET_SIZE;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_TABLET_SIZE_DEFAULT;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_TABLET_SIZE_MIN;
-import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_TABLE_IDENTIFIER;
-import static com.starrocks.connector.spark.util.ErrorMessages.CONNECT_FAILED_MESSAGE;
-import static com.starrocks.connector.spark.util.ErrorMessages.ILLEGAL_ARGUMENT_MESSAGE;
-import static com.starrocks.connector.spark.util.ErrorMessages.PARSE_NUMBER_FAILED_MESSAGE;
-import static com.starrocks.connector.spark.util.ErrorMessages.SHOULD_NOT_HAPPEN_MESSAGE;
-
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.starrocks.connector.spark.cfg.ConfigurationOptions;
 import com.starrocks.connector.spark.cfg.Settings;
-import com.starrocks.connector.spark.cfg.SparkSettings;
 import com.starrocks.connector.spark.exception.ConnectedFailedException;
-import com.starrocks.connector.spark.exception.StarrocksException;
 import com.starrocks.connector.spark.exception.IllegalArgumentException;
 import com.starrocks.connector.spark.exception.ShouldNeverHappenException;
-import com.starrocks.connector.spark.rest.models.BackendV2;
+import com.starrocks.connector.spark.exception.StarrocksException;
 import com.starrocks.connector.spark.rest.models.QueryPlan;
 import com.starrocks.connector.spark.rest.models.Schema;
 import com.starrocks.connector.spark.rest.models.Tablet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -58,13 +43,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -79,6 +61,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_FENODES;
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_FILTER_QUERY;
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_READ_FIELD;
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_REQUEST_AUTH_PASSWORD;
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_REQUEST_AUTH_USER;
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_TABLET_SIZE;
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_TABLET_SIZE_DEFAULT;
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_TABLET_SIZE_MIN;
+import static com.starrocks.connector.spark.cfg.ConfigurationOptions.STARROCKS_TABLE_IDENTIFIER;
+import static com.starrocks.connector.spark.util.ErrorMessages.CONNECT_FAILED_MESSAGE;
+import static com.starrocks.connector.spark.util.ErrorMessages.ILLEGAL_ARGUMENT_MESSAGE;
+import static com.starrocks.connector.spark.util.ErrorMessages.PARSE_NUMBER_FAILED_MESSAGE;
+import static com.starrocks.connector.spark.util.ErrorMessages.SHOULD_NOT_HAPPEN_MESSAGE;
+
 /**
  * Service for communicate with StarRocks FE.
  */
@@ -87,10 +83,6 @@ public class RestService implements Serializable {
     private static final String API_PREFIX = "/api";
     private static final String SCHEMA = "_schema";
     private static final String QUERY_PLAN = "_query_plan";
-
-    @Deprecated
-    private static final String BACKENDS = "/rest/v1/system?path=//backends";
-    private static final String BACKENDS_V2 = "/api/backends?is_alive=true";
 
     /**
      * send request to StarRocks FE and get response json string.
@@ -121,13 +113,15 @@ public class RestService implements Serializable {
 
         String user = cfg.getProperty(STARROCKS_REQUEST_AUTH_USER, "");
         String password = cfg.getProperty(STARROCKS_REQUEST_AUTH_PASSWORD, "");
-
-        CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(
-                AuthScope.ANY,
-                new UsernamePasswordCredentials(user, password));
+        UsernamePasswordCredentials creds = new UsernamePasswordCredentials(user, password);
         HttpClientContext context = HttpClientContext.create();
-        context.setCredentialsProvider(credentialsProvider);
+        try {
+            request.addHeader(new BasicScheme().authenticate(creds, request, context));
+        } catch (AuthenticationException e) {
+            logger.error(CONNECT_FAILED_MESSAGE, request.getURI(), e);
+            throw new ConnectedFailedException(request.getURI().toString(), -1, e);
+        }
+
         logger.info("Send request to StarRocks FE '{}' with user '{}'.", request.getURI(), user);
 
         IOException ex = null;
@@ -167,7 +161,7 @@ public class RestService implements Serializable {
      * @throws IllegalArgumentException table identifier is illegal
      */
     @VisibleForTesting
-    static String[] parseIdentifier(String tableIdentifier, Logger logger) throws IllegalArgumentException {
+    public static String[] parseIdentifier(String tableIdentifier, Logger logger) throws IllegalArgumentException {
         logger.trace("Parse identifier '{}'.", tableIdentifier);
         if (StringUtils.isEmpty(tableIdentifier)) {
             logger.error(ILLEGAL_ARGUMENT_MESSAGE, "table.identifier", tableIdentifier);
@@ -190,8 +184,8 @@ public class RestService implements Serializable {
      * @throws IllegalArgumentException fe nodes is illegal
      */
     @VisibleForTesting
-    public static String randomEndpoint(String feNodes, Logger logger) throws IllegalArgumentException {
-        logger.trace("Parse nodes '{}'.", feNodes);
+    static String randomEndpoint(String feNodes, Logger logger) throws IllegalArgumentException {
+        logger.trace("Parse fenodes '{}'.", feNodes);
         if (StringUtils.isEmpty(feNodes)) {
             logger.error(ILLEGAL_ARGUMENT_MESSAGE, "fenodes", feNodes);
             throw new IllegalArgumentException("fenodes", feNodes);
@@ -475,64 +469,4 @@ public class RestService implements Serializable {
         }
         return partitions;
     }
-
-    public static String randomBackendV3(SparkSettings sparkSettings, Logger logger) throws StarrocksException {
-        String beNodes = sparkSettings.getProperty(STARROCKS_BENODES);
-        String beNode = randomEndpoint(beNodes, logger);
-        return beNode;
-    }
-
-    /**
-     * choice a StarRocks BE node to request.
-     * @param logger slf4j logger
-     * @return the chosen one StarRocks BE node
-     * @throws IllegalArgumentException BE nodes is illegal
-     */
-    @VisibleForTesting
-    public static String randomBackendV2(SparkSettings sparkSettings, Logger logger) throws StarrocksException {
-        String feNodes = sparkSettings.getProperty(STARROCKS_FENODES);
-        String feNode = randomEndpoint(feNodes, logger);
-        String beUrl =   String.format("http://%s" + BACKENDS_V2, feNode);
-        HttpGet httpGet = new HttpGet(beUrl);
-        String response = send(sparkSettings, httpGet, logger);
-        logger.info("Backend Info:{}", response);
-        List<BackendV2.BackendRowV2> backends = parseBackendV2(response, logger);
-        logger.trace("Parse beNodes '{}'.", backends);
-        if (backends == null || backends.isEmpty()) {
-            logger.error(ILLEGAL_ARGUMENT_MESSAGE, "beNodes", backends);
-            throw new IllegalArgumentException("beNodes", String.valueOf(backends));
-        }
-        Collections.shuffle(backends);
-        BackendV2.BackendRowV2 backend = backends.get(0);
-        return backend.getIp() + ":" + backend.getHttpPort();
-    }
-
-    static List<BackendV2.BackendRowV2> parseBackendV2(String response, Logger logger) throws StarrocksException {
-        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        BackendV2 backend;
-        try {
-            backend = mapper.readValue(response, BackendV2.class);
-        } catch (com.fasterxml.jackson.core.JsonParseException e) {
-            String errMsg = "StarRocks BE's response is not a json. res: " + response;
-            logger.error(errMsg, e);
-            throw new StarrocksException(errMsg, e);
-        } catch (com.fasterxml.jackson.databind.JsonMappingException e) {
-            String errMsg = "StarRocks BE's response cannot map to schema. res: " + response;
-            logger.error(errMsg, e);
-            throw new StarrocksException(errMsg, e);
-        } catch (IOException e) {
-            String errMsg = "Parse StarRocks BE's response to json failed. res: " + response;
-            logger.error(errMsg, e);
-            throw new StarrocksException(errMsg, e);
-        }
-
-        if (backend == null) {
-            logger.error(SHOULD_NOT_HAPPEN_MESSAGE);
-            throw new ShouldNeverHappenException();
-        }
-        List<BackendV2.BackendRowV2> backendRows = backend.getBackends();
-        logger.debug("Parsing schema result is '{}'.", backendRows);
-        return backendRows;
-    }
-
 }

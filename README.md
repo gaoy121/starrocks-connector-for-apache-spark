@@ -1,15 +1,25 @@
-通过如下命令进行 Spark 连接器的编译：
+This Connector can support reading data stored in StarRocks through Apache Spark™.
 
-如果 Spark 版本是 v2.x，则执行如下命令，默认编译的是配套 Spark v2.3.4 的连接器：
+## Upstream
 
-sh build.sh 2
+[Apache doris-spark-connector(incubating)](https://github.com/apache/incubator-doris-spark-connector) is the upstream of this Connector. We are very grateful to Apache Doris(incubating) community for contributing such an excellent connector.
 
-如果 Spark 版本是 v3.x，则执行如下命令，默认编译的是配套 Spark v3.1.2 的连接器：
+We will continue to contribute to Apache Doris(incubating) and help to build the open source ecosystem in the future. 
 
-sh build.sh 3
+## Install and Use
 
-编译完成后，output/ 路径下生成 starrocks-spark2_2.11-1.0.0.jar 文件。将该文件拷贝至 Spark 的类文件路径 (Classpath) 下：
+Please refer to [here](docs/spark-starrocks-connector.md).
 
-如果您的 Spark 以 Local 模式运行，需要把该文件放在 jars/ 路径下。
+## Links
 
-如果您的 Spark 以 Yarn 模式运行，需要把该文件放在预安装程序包 (Pre-deployment Package) 里。
+* [StarRocks official website](https://www.starrocks.com)
+* [StarRocks documentation](https://docs.starrocks.com)
+
+## LICENSE
+
+[Apache License 2.0](LICENSE.txt)
+
+## Contributing to StarRocks
+
+A big thanks for your attention to StarRocks! 
+In order to accept your pull request, please follow the [CONTRIBUTING.md](CONTRIBUTING.md).

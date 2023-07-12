@@ -22,8 +22,6 @@ package com.starrocks.connector.spark.cfg;
 public interface ConfigurationOptions {
     // starrocks fe node address
     String STARROCKS_FENODES = "starrocks.fenodes";
-    // starrocks be node address
-    String STARROCKS_BENODES = "starrocks.benodes";
 
     String STARROCKS_DEFAULT_CLUSTER = "default_cluster";
 
@@ -67,13 +65,4 @@ public interface ConfigurationOptions {
 
     String STARROCKS_DESERIALIZE_QUEUE_SIZE = "starrocks.deserialize.queue.size";
     int STARROCKS_DESERIALIZE_QUEUE_SIZE_DEFAULT = 64;
-
-    String STARROCKS_SINK_BATCH_SIZE = "starrocks.sink.batch.size";
-    int SINK_BATCH_SIZE_DEFAULT = 10000;
-
-    String STARROCKS_SINK_MAX_RETRIES = "starrocks.sink.max-retries";
-    int SINK_MAX_RETRIES_DEFAULT = 1;
-
-    String STARROCKS_WRITE_FIELDS = "starrocks.write.fields";
-    String STARROCKS_MAX_FILTER_RATIO = "starrocks.max.filter.ratio";
 }

@@ -1,4 +1,4 @@
-// Modifications Copyright 2021 StarRocks Limited.
+// Copyright 2021-present StarRocks, Inc. All rights reserved.
 //
 // Licensed to the Apache Software Foundation (ASF) under one
 // or more contributor license agreements.  See the NOTICE file
@@ -17,16 +17,27 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.starrocks.connector.spark.exception;
+package com.starrocks.connector.spark.sql.conf;
 
-import com.starrocks.thrift.TStatusCode;
+import java.io.Serializable;
+import java.util.Map;
+import javax.annotation.Nullable;
 
-import java.util.List;
+public interface StarRocksConfig extends Serializable {
 
-public class StarrocksInternalException extends StarrocksException {
-    public StarrocksInternalException(String server, TStatusCode statusCode, List<String> errorMsgs) {
-        super("StarRocks server " + server + " internal failed, status code [" + statusCode + "] error message is " +
-                errorMsgs);
-    }
+    String PREFIX = "starrocks.";
 
+    Map<String, String> getOriginOptions();
+
+    String[] getFeHttpUrls();
+    String getFeJdbcUrl();
+    String getDatabase();
+    String getTable();
+    String getUsername();
+    String getPassword();
+    int getHttpRequestRetries();
+    int getHttpRequestConnectTimeoutMs();
+    int getHttpRequestSocketTimeoutMs();
+    @Nullable
+    String[] getColumns();
 }

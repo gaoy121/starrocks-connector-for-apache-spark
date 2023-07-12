@@ -19,16 +19,18 @@
 
 package com.starrocks.connector.spark.sql
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable
-import scala.math.min
 import com.starrocks.connector.spark.cfg.ConfigurationOptions._
 import com.starrocks.connector.spark.cfg.{ConfigurationOptions, SparkSettings}
+import com.starrocks.connector.spark.sql.schema.InferSchema
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.math.min
 
 
 private[sql] class StarrocksRelation(
@@ -45,7 +47,7 @@ private[sql] class StarrocksRelation(
     min(cfg.getProperty(STARROCKS_FILTER_QUERY_IN_MAX_COUNT, "100").toInt,
       STARROCKS_FILTER_QUERY_IN_VALUE_UPPER_LIMIT)
 
-  private lazy val lazySchema = SchemaUtils.discoverSchema(cfg)
+  private lazy val lazySchema = InferSchema.inferSchema(cfg.getPropertyMap)
 
   private lazy val dialect = JdbcDialects.get("")
 
@@ -87,19 +89,11 @@ private[sql] class StarrocksRelation(
     new ScalaStarrocksRowRDD(sqlContext.sparkContext, paramWithScan.toMap, lazySchema)
   }
 
-  // Insert Table
   override def insert(data: DataFrame, overwrite: Boolean): Unit = {
-    //replace 'starrocks.request.auth.user' with 'user' and 'starrocks.request.auth.password' with 'password'
-    val insertCfg = cfg.copy().asProperties().asScala.map {
-      case (ConfigurationOptions.STARROCKS_REQUEST_AUTH_USER, v) =>
-        ("user", v)
-      case (ConfigurationOptions.STARROCKS_REQUEST_AUTH_PASSWORD, v) =>
-        ("password", v)
-      case (k, v) => (k, v)
-    }
-    data.write.format(StarrocksSourceProvider.SHORT_NAME)
-      .options(insertCfg)
+    data.write
+      .format("starrocks")
+      .options(cfg.getPropertyMap)
+      .mode(SaveMode.Append)
       .save()
   }
-
 }

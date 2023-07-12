@@ -24,22 +24,55 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <name>starrocks-spark-connector</name>
+    <description>Spark connector for starrocks.</description>
+    <url>https://github.com/StarRocks/starrocks-connector-for-apache-spark</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <scm>
+        <url>https://github.com/StarRocks/starrocks-connector-for-apache-spark</url>
+        <connection>https://github.com/StarRocks/starrocks-connector-for-apache-spark.git</connection>
+    </scm>
+    <developers>
+        <developer>
+            <name>starrocks</name>
+            <id>starrocks</id>
+            <email>open@starrocks.com</email>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>+8</timezone>
+        </developer>
+    </developers>
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.starrocks</groupId>
-    <artifactId>starrocks-spark2_2.11</artifactId>
-    <version>1.0.1</version>
+    <artifactId>starrocks-spark-connector-${env.SPARK_FEATURE_VERSION}_${env.STARROCKS_SCALA_VERSION}</artifactId>
+    <version>1.1.1-SNAPSHOT</version>
 
     <properties>
-        <scala.version>2.11</scala.version>
-        <spark.version>2.3.4</spark.version>
+        <sr_scala.version>2.12</sr_scala.version>
+        <sr_spark.version>3.2.4</sr_spark.version>
+        <scala-lang.version>2.12.10</scala-lang.version>
         <libthrift.version>0.14.0</libthrift.version>
         <arrow.version>5.0.0</arrow.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fasterxml.version>2.12.0</fasterxml.version>
+        <slf4j.version>1.7.32</slf4j.version>
+        <log4j.version>2.17.2</log4j.version>
+        <httpclient.version>4.5.13</httpclient.version>
+        <httpcore.version>4.4.15</httpcore.version>
+        <fastjson.version>1.2.83</fastjson.version>
     </properties>
 
-    <!--<profiles>
-        &lt;!&ndash; for custom internal repository &ndash;&gt;
+    <profiles>
+        <!-- for custom internal repository -->
         <profile>
             <id>custom-env</id>
             <activation>
@@ -63,7 +96,7 @@
             </pluginRepositories>
         </profile>
 
-        &lt;!&ndash; for general repository &ndash;&gt;
+        <!-- for general repository -->
         <profile>
             <id>general-env</id>
             <activation>
@@ -80,44 +113,185 @@
                 </repository>
             </repositories>
         </profile>
-    </profiles>-->
+
+        <profile>
+            <id>spark-3.2</id>
+            <activation>
+                <property>
+                    <name>env.spark-3.2</name>
+                </property>
+            </activation>
+
+            <properties>
+                <env.STARROCKS_SCALA_VERSION>2.12</env.STARROCKS_SCALA_VERSION>
+                <env.STARROCKS_SPARK_VERSION>3.2.4</env.STARROCKS_SPARK_VERSION>
+                <env.SPARK_FEATURE_VERSION>3.2</env.SPARK_FEATURE_VERSION>
+                <fasterxml.version>2.12.0</fasterxml.version>
+                <slf4j.version>1.7.32</slf4j.version>
+                <log4j.version>2.17.2</log4j.version>
+            </properties>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                    <version>${log4j.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>spark-3.3</id>
+            <activation>
+                <property>
+                    <name>env.spark-3.3</name>
+                </property>
+            </activation>
+
+            <properties>
+                <env.STARROCKS_SCALA_VERSION>2.12</env.STARROCKS_SCALA_VERSION>
+                <env.STARROCKS_SPARK_VERSION>3.3.2</env.STARROCKS_SPARK_VERSION>
+                <env.SPARK_FEATURE_VERSION>3.3</env.SPARK_FEATURE_VERSION>
+                <fasterxml.version>2.13.0</fasterxml.version>
+                <slf4j.version>1.7.32</slf4j.version>
+                <log4j.version>2.17.2</log4j.version>
+            </properties>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                    <version>${log4j.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>spark-3.4</id>
+            <activation>
+                <property>
+                    <name>env.spark-3.4</name>
+                </property>
+            </activation>
+
+            <properties>
+                <env.STARROCKS_SCALA_VERSION>2.12</env.STARROCKS_SCALA_VERSION>
+                <env.STARROCKS_SPARK_VERSION>3.4.0</env.STARROCKS_SPARK_VERSION>
+                <env.SPARK_FEATURE_VERSION>3.4</env.SPARK_FEATURE_VERSION>
+                <fasterxml.version>2.14.0</fasterxml.version>
+                <slf4j.version>2.0.6</slf4j.version>
+                <log4j.version>2.19.0</log4j.version>
+            </properties>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                    <version>${log4j.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.87.Final</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.starrocks</groupId>
+            <artifactId>starrocks-stream-load-sdk</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala-lang.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.starrocks</groupId>
+            <artifactId>starrocks-thrift-sdk</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.49</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.version}</artifactId>
-            <version>${spark.version}</version>
+            <artifactId>spark-core_${sr_scala.version}</artifactId>
+            <version>${sr_spark.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.version}</artifactId>
-            <version>${spark.version}</version>
+            <artifactId>spark-sql_${sr_scala.version}</artifactId>
+            <version>${sr_spark.version}</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>libthrift</artifactId>
-            <version>${libthrift.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.annotation</groupId>
-                    <artifactId>javax.annotation-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-vector</artifactId>
             <version>${arrow.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-memory-netty</artifactId>
             <version>${arrow.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>${httpcore.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${fasterxml.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${fasterxml.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${fasterxml.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!--Test-->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_${sr_scala.version}</artifactId>
+            <version>${sr_spark.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
@@ -126,8 +300,8 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-scala_${scala.version}</artifactId>
-            <version>1.4.7</version>
+            <artifactId>mockito-scala_${sr_scala.version}</artifactId>
+            <version>1.6.2</version>
             <exclusions>
                 <exclusion>
                     <artifactId>hamcrest-core</artifactId>
@@ -148,6 +322,48 @@
             </exclusions>
             <scope>test</scope>
         </dependency>
+
+        <!-- log4j -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <!-- API bridge between log4j 1 and 2 -->
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-1.2-api</artifactId>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- end -->
     </dependencies>
 
     <build>
@@ -156,6 +372,11 @@
                 <groupId>org.apache.thrift.tools</groupId>
                 <artifactId>maven-thrift-plugin</artifactId>
                 <version>0.1.11</version>
+                <configuration>
+                    <thriftSourceRoot>${basedir}/src/main/thrift</thriftSourceRoot>
+                    <outputDirectory>${basedir}/gen-thrift</outputDirectory>
+                    <generator>java</generator>
+                </configuration>
                 <executions>
                     <execution>
                         <id>thrift-sources</id>
@@ -193,6 +414,48 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <version>0.13</version>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <consoleOutput>true</consoleOutput>
+                    <excludeSubProjects>false</excludeSubProjects>
+                    <numUnapprovedLicenses>0</numUnapprovedLicenses>
+                    <licenses>
+                        <license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
+                            <licenseFamilyCategory>AL2 </licenseFamilyCategory>
+                            <licenseFamilyName>Apache License 2.0</licenseFamilyName>
+                            <notes />
+                            <patterns>
+                                <pattern>Licensed to the Apache Software Foundation (ASF) under one</pattern>
+                            </patterns>
+                        </license>
+                    </licenses>
+                    <licenseFamilies>
+                        <licenseFamily implementation="org.apache.rat.license.SimpleLicenseFamily">
+                            <familyName>Apache License 2.0</familyName>
+                        </licenseFamily>
+                    </licenseFamilies>
+                    <excludes>
+                        <exclude>src/test/resources/data/**</exclude>
+                        <exclude>**/target/**</exclude>
+                        <exclude>README.md</exclude>
+                        <exclude>CODE_OF_CONDUCT.md</exclude>
+                        <exclude>CONTRIBUTING.md</exclude>
+                        <exclude>.github/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.2.1</version>
@@ -201,34 +464,9 @@
                         <excludes>
                             <exclude>com.google.code.findbugs:*</exclude>
                             <exclude>org.slf4j:*</exclude>
+                            <exclude>org.scala-lang:*</exclude>
                         </excludes>
                     </artifactSet>
-                    <relocations>
-                        <relocation>
-                            <pattern>org.apache.arrow</pattern>
-                            <shadedPattern>com.starrocks.shaded.org.apache.arrow</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>io.netty</pattern>
-                            <shadedPattern>com.starrocks.shaded.io.netty</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>com.fasterxml.jackson</pattern>
-                            <shadedPattern>com.starrocks.shaded.com.fasterxml.jackson</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>org.apache.commons.codec</pattern>
-                            <shadedPattern>com.starrocks.shaded.org.apache.commons.codec</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>com.google.flatbuffers</pattern>
-                            <shadedPattern>com.starrocks.shaded.com.google.flatbuffers</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>org.apache.thrift</pattern>
-                            <shadedPattern>com.starrocks.shaded.org.apache.thrift</shadedPattern>
-                        </relocation>
-                    </relocations>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>
@@ -248,37 +486,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.8</version>
-                <configuration>
-                    <excludes>
-                        <exclude>**/thrift/**</exclude>
-                    </excludes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>check</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
@@ -287,7 +494,123 @@
                     <target>8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>4.0.2</version>
+                <executions>
+                    <execution>
+                        <id>get-the-git-infos</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <generateGitPropertiesFilename>${project.build.outputDirectory}/starrocks-spark-connector-git.properties</generateGitPropertiesFilename>
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                    <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+                    <includeOnlyProperties>
+                        <includeOnlyProperty>^git.build.time$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.build.version$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.commit.id$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.commit.user.email$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.commit.user.name$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.commit.message.full$</includeOnlyProperty>
+                    </includeOnlyProperties>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+         <snapshotRepository>
+             <id>ossrh</id>
+             <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+         </snapshotRepository>
+         <repository>
+             <id>ossrh</id>
+             <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+         </repository>
+     </distributionManagement>
+     <reporting>
+         <plugins>
+             <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-checkstyle-plugin</artifactId>
+                 <version>3.1.0</version>
+                 <configuration>
+                     <configLocation>checkstyle.xml</configLocation>
+                 </configuration>
+             </plugin>
+         </plugins>
+     </reporting>
 </project>
